@@ -86,10 +86,8 @@ bool CBFunction::parse() {
 	currentBlock = 0;
 	stack<StackValue> varStack;
 	StackValue stackValue;
-	cout << "\nGenerating bytecode for function:\n";
 	for (ByteCode::iterator i = mBCBegin; i != mBCEnd; i++) {
 		CBInstruction &inst = *i;
-		cout << "<" << index << ">  " << inst << "\n";
 		if (inst.mBasicBlock != currentBlock) {
 			if (builder) {
 				if (skipBr != index && !skipToBlockChange) builder->CreateBr(inst.mBasicBlock);

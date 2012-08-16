@@ -13,9 +13,11 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	if (argc == 3) {
 		ByteCodeReader reader;
+		cout << "Reading bytecode...\n";
 		if (reader.readCBExecutable(string(argv[1]))) {
 			reader.byteCode().print();
 
+			cout << "Initializing LLVM...\n";
 			InitializeNativeTarget();
 
 			PassRegistry *registry = PassRegistry::getPassRegistry();
@@ -42,25 +44,21 @@ int main(int argc, char *argv[]) {
 			initializeTarget(*registry);
 			initializeConstantMergePass(*registry);
 
-
+			cout << "Generating LLVM-assembly...\n";
 			LLVMModuleGenerator generator;
 			Module *mod = generator.generate(reader.byteCode());
+
+			cout << "Linking runtime...\n";
 			LLVMLinker linker(mod);
 			vector< sys::Path > bitcodefiles;
 			bitcodefiles.push_back(sys::Path(argv[2]));
 			if (linker.link(bitcodefiles)) {
 				cerr << "Failed to link runtime\n";
 				return 0;
-			}/*
-			string error;
-
-			OwningPtr<MemoryBuffer> mem;
-			MemoryBuffer::getFile(argv[2], mem);
-			Module *runtime = ParseBitcodeFile(mem.get(), mod->getContext(), &error);
-			LLVMLinker linker(runtime);
-			linker.link(mod);*/
+			}
 			mod = linker.releaseModule();
 
+			cout << "Optimizing and verifying module...\n";
 			string errorInfo;
 			raw_fd_ostream assemblyFile("llvmassembly.s", errorInfo);
 			PassManager passManager;
@@ -74,8 +72,6 @@ int main(int argc, char *argv[]) {
 			passManager.run(*mod);
 			assemblyFile.close();
 
-			//verifyModule(*mod);
-
 			printf("Writing bitcode file...\n");
 			raw_fd_ostream bitcodeFile("temp.bc", errorInfo, raw_fd_ostream::F_Binary);
 			if (errorInfo.empty()) {
@@ -87,7 +83,7 @@ int main(int argc, char *argv[]) {
 			}
 			printf("Creating native assembly...\n");
 			system("llc.exe temp.bc");
-			printf("Linking to binary...\n");
+			printf("Building binary...\n");
 			system("mingw32-gcc -o temp temp.s");
 			printf("Success\n");
 		}
@@ -96,7 +92,7 @@ int main(int argc, char *argv[]) {
 		}
 	}
 	else {
-		cerr << "Usage: LLVMTest.exe <file> <runtime library file>" << endl;
+		cerr << "Usage: cbE-LLVM.exe <file> <runtime library file>" << endl;
 		return -1;
 	}
 	return 0;
