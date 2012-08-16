@@ -1,0 +1,10 @@
+t = Timer()
+num = 2
+For i = 1 To 10000
+    num = 23
+    For i2 = 2 To 10000
+        num = num + i2 + 53 + i
+    Next i2
+Next i
+Print (Timer() - t)
+Print num

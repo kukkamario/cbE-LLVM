@@ -1,0 +1,13 @@
+debug
+release
+/RuntimeLibrary/Makefile.Debug
+/RuntimeLibrary/Makefile.Release
+/RuntimeLibrary/RuntimeLibrary.pro.user
+/RuntimeLibrary/Makefile
+/Compiler/Makefile.Debug
+/Compiler/Makefile.Release
+/Compiler/Compiler.pro.user
+/Compiler/Makefile
+/Compiler/release
+/Compiler/debug
+Compiler-build-desktop-Qt_4_8_0_for_Desktop_-_MSVC2010__Qt_SDK__Debug
