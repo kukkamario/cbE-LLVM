@@ -1,15 +1,15 @@
 #ifndef PRECOMP_H
 #define PRECOMP_H
 #include <string>
-#include <QList>
-#include <QString>
+#include <list>
 #include <iostream>
 #include <stdio.h>
 #include <math.h>
 #include <fstream>
-#include <QStack>
-#include <QMap>
-#include <QLinkedList>
+#include <stack>
+#include <map>
+#include <vector>
+#include <stdint.h>
 
 #include <llvm/LLVMContext.h>
 #include <llvm/Module.h>

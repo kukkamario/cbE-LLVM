@@ -1,6 +1,5 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
-#include <QtGlobal>
 #include "precomp.h"
 enum OpCode {
 	OCUnknown = 0,
@@ -26,17 +25,17 @@ extern const char* OpCodeNames[OpCodeCount];
 struct CBInstruction {
 		CBInstruction() : mOpCode(OCUnknown), mData(0), mBasicBlock(0) {
 		}
-		CBInstruction(OpCode op, qint32 d) : mOpCode(op), mData(d) {}
+		CBInstruction(OpCode op, int32_t d) : mOpCode(op), mData(d) {}
 		OpCode mOpCode;
-		qint32 mData;
-		qint32 mIndex;
+		int32_t mData;
+		int32_t mIndex;
 		llvm::BasicBlock *mBasicBlock;
 };
 
 inline ostream &operator << (ostream & s, const CBInstruction &i) {
 	s << "<" << OpCodeNames[i.mOpCode] << ">";
 	int len = 25 - strlen(OpCodeNames[i.mOpCode]);
-	for (qint32 ii = 0; ii < len; ii++) {
+	for (int32_t ii = 0; ii < len; ii++) {
 		s << " ";
 	}
 	s << i.mData;

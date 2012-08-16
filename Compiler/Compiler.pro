@@ -1,5 +1,6 @@
-QT += core gui
+QT -= core gui
 TEMPLATE = app
+CONFIG -= qt
 CONFIG += console
 CONFIG += precompiled_header
 

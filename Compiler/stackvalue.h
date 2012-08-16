@@ -12,7 +12,7 @@ struct StackValue {
 		Value *mValue;
 		bool mConstant;
 		union {
-				qint32 mInt;
+				int32_t mInt;
 				float mFloat;
 				string *mString;
 		};

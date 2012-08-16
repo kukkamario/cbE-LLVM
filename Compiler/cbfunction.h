@@ -9,11 +9,11 @@ class CBFunction
 	public:
 		CBFunction(ByteCode::iterator begin, ByteCode::iterator end, Function *func, Module* mod, bool isMain);
 		bool parse();
-		void init(qint32 ints, qint32 floats, qint32 strings, qint32 bytes, qint32 shorts, qint32 typePtrs);
+		void init(int32_t ints, int32_t floats, int32_t strings, int32_t bytes, int32_t shorts, int32_t typePtrs);
 	private:
 		Variable *mIntVars;
 		Module *mModule;
-		QMap<int32_t, BasicBlock*> mBasicBlock;
+		map<int32_t, BasicBlock*> mBasicBlock;
 		ByteCode::iterator mBCBegin;
 		ByteCode::iterator mBCEnd;
 		Function *mFunction;

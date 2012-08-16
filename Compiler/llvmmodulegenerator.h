@@ -17,7 +17,7 @@ class LLVMModuleGenerator
 		Function *cbRuntimeMain;
 	private:
 		void separateFunctions(const ByteCode &bc);
-		QList<CBFunction*> mFunctions;
+		vector<CBFunction*> mFunctions;
 };
 
 #endif // LLVMMODULEGENERATOR_H

@@ -13,7 +13,7 @@ using namespace std;
 int main(int argc, char *argv[]) {
 	if (argc == 3) {
 		ByteCodeReader reader;
-		if (reader.readCBExecutable(QString(argv[1]))) {
+		if (reader.readCBExecutable(string(argv[1]))) {
 			reader.byteCode().print();
 
 			InitializeNativeTarget();

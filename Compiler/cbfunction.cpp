@@ -84,7 +84,7 @@ bool CBFunction::parse() {
 	int32_t skipBr = 0;
 	IRBuilder<> *builder = 0;
 	currentBlock = 0;
-	QStack<StackValue> stack;
+	stack<StackValue> varStack;
 	StackValue stackValue;
 	cout << "\nGenerating bytecode for function:\n";
 	for (ByteCode::iterator i = mBCBegin; i != mBCEnd; i++) {
@@ -106,23 +106,23 @@ bool CBFunction::parse() {
 				stackValue.mValue = ConstantInt::get(intType, inst.mData, true);
 				stackValue.mConstant = true;
 				stackValue.mInt = inst.mData;
-				stack.push(stackValue);
+				varStack.push(stackValue);
 				break;
 			}
 			case OCSetInt: {
-				stackValue = stack.pop();
+				stackValue = varStack.top(); varStack.pop();
 				builder->CreateStore(stackValue.mValue, mIntVars[inst.mData - 1].mAllocaInst,false);
 				break;
 			}
 			case  OCPushVariable: {
-				stackValue = stack.pop(); //Type
+				stackValue = varStack.top(); varStack.pop();//Type
 				switch(stackValue.mInt) {
 					case 1: //Int
 						stackValue.mValue = builder->CreateLoad(mIntVars[inst.mData - 1].mAllocaInst, false);
 						stackValue.mType = StackValue::Int;
 				}
 				stackValue.mConstant = false;
-				stack.push(stackValue);
+				varStack.push(stackValue);
 				break;
 			}
 			case OCIncVar: {
@@ -134,36 +134,36 @@ bool CBFunction::parse() {
 			case OCOperation: {
 				switch(inst.mData) {
 					case 4: {//Addition
-						StackValue right = stack.pop();
-						StackValue left = stack.pop();
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
 						stackValue.mValue = builder->CreateAdd(left.mValue, right.mValue);
 						stackValue.mType = StackValue::Int;
 						stackValue.mConstant = false;
-						stack.push(stackValue);
+						varStack.push(stackValue);
 						break;
 					}
 					case 5:{//Subtraction
-						StackValue right = stack.pop();
-						StackValue left = stack.pop();
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
 						stackValue.mValue = builder->CreateSub(left.mValue, right.mValue);
 						stackValue.mType = StackValue::Int;
 						stackValue.mConstant = false;
-						stack.push(stackValue);
+						varStack.push(stackValue);
 						break;
 					}
 					case 16: {//lessThanOrEqual
-						StackValue right = stack.pop();
-						StackValue left = stack.pop();
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
 						stackValue.mValue = builder->CreateICmpSLE(left.mValue, right.mValue);
 						stackValue.mType = StackValue::Int;
 						stackValue.mConstant = false;
-						stack.push(stackValue);
+						varStack.push(stackValue);
 					}
 				}
 				break;
 			}
 			case OCJump: {
-				stackValue = stack.pop();
+				stackValue = varStack.top(); varStack.pop();
 				builder->CreateCondBr(stackValue.mValue, basicBlocks[index + 1], basicBlocks[inst.mData]);
 				skipBr = index + 1;
 			}
@@ -182,29 +182,29 @@ bool CBFunction::parse() {
 						builder->CreateUnreachable();
 						break;
 					case 97: //Array numbers
-						stack.pop(); //Short
-						stack.pop(); //Byte
-						stack.pop(); //String
-						stack.pop(); //Float
-						stack.pop(); //Int
+						varStack.pop(); //Short
+						varStack.pop(); //Byte
+						varStack.pop(); //String
+						varStack.pop(); //Float
+						varStack.pop(); //Int
 						break;
 					case 98: //Global variables
-						stack.pop(); //Short
-						stack.pop(); //Byte
-						stack.pop(); //String
-						stack.pop(); //Float
-						stack.pop(); //Int
+						varStack.pop(); //Short
+						varStack.pop(); //Byte
+						varStack.pop(); //String
+						varStack.pop(); //Float
+						varStack.pop(); //Int
 						break;
 					case 99: {
-							qint32 typePtrs = stack.pop().mInt; //TypePtrs
-							qint32 shorts = stack.pop().mInt; //Short
-							qint32 bytes = stack.pop().mInt; //Byte
-							qint32 strings = stack.pop().mInt; //String
-							qint32 floats = stack.pop().mInt; //Float
-							qint32 ints = stack.pop().mInt; //Int
+							int32_t typePtrs = varStack.top().mInt; varStack.pop();//TypePtrs
+							int32_t shorts = varStack.top().mInt; varStack.pop();//Short
+							int32_t bytes = varStack.top().mInt; varStack.pop();//Byte
+							int32_t strings = varStack.top().mInt; varStack.pop();//String
+							int32_t floats = varStack.top().mInt; varStack.pop();//Float
+							int32_t ints = varStack.top().mInt; varStack.pop();//Int
 							if (ints > 0) {
 								mIntVars = new Variable[ints];
-								for (qint32 i = 0; i < ints; i++) {
+								for (int32_t i = 0; i < ints; i++) {
 									mIntVars[i].mAllocaInst = builder->CreateAlloca(intType);
 									builder->CreateStore(constIntZero, mIntVars[i].mAllocaInst, false);
 								}
@@ -212,7 +212,7 @@ bool CBFunction::parse() {
 							break;
 						}
 					case 207: {//Print
-						stackValue = stack.pop();
+						stackValue = varStack.top(); varStack.pop();
 						builder->CreateCall(modGen->commandPrintI->function(), stackValue.mValue);
 						break;
 					}
@@ -224,7 +224,7 @@ bool CBFunction::parse() {
 					case 422: //Timer
 						stackValue.mValue = builder->CreateCall(modGen->functionTimer->function());
 						stackValue.mType = StackValue::Int;
-						stack.push(stackValue);
+						varStack.push(stackValue);
 						break;
 				}
 				break;
