@@ -16,7 +16,7 @@ void ByteCode::print() {
 	cout << "Constant strings:\n";
 	int id = 1;
 	for (StringPool::const_iterator i = mStringPool.begin(); i != mStringPool.end(); i++) {
-		cout << "[" + id << "] " << *i << "\n";
+		cout << "[" + id << "] " << i->mString << "\n";
 	}
 	cout << "\n";
 	cout << "CB bytecode:\n";

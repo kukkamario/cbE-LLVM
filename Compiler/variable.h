@@ -1,6 +1,6 @@
 #ifndef VARIABLE_H
 #define VARIABLE_H
-#include "precomp.h"
+#include "precompiled.h"
 struct Variable {
 		AllocaInst *mAllocaInst;
 };

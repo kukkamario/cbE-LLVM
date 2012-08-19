@@ -1,7 +1,7 @@
 #ifndef BYTECODEREADER_H
 #define BYTECODEREADER_H
 #include "bytecode.h"
-#include "precomp.h"
+#include "precompiled.h"
 
 class ByteCodeReader
 {

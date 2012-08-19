@@ -1,6 +1,6 @@
 #ifndef LLVMMODULEGENERATOR_H
 #define LLVMMODULEGENERATOR_H
-#include "precomp.h"
+#include "precompiled.h"
 #include "bytecode.h"
 #include "variable.h"
 #include "cbfunction.h"

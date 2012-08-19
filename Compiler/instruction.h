@@ -1,6 +1,6 @@
 #ifndef INSTRUCTION_H
 #define INSTRUCTION_H
-#include "precomp.h"
+#include "precompiled.h"
 enum OpCode {
 	OCUnknown = 0,
 	OCPushInt,

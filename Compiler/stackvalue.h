@@ -1,12 +1,12 @@
 #ifndef STACKVALUE_H
 #define STACKVALUE_H
-#include "precomp.h"
+#include "precompiled.h"
 struct StackValue {
 		enum Type {
 			Int,
 			Float,
 			String,
-			Any
+			TypePtr
 		};
 		Type mType;
 		Value *mValue;

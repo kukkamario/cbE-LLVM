@@ -1,4 +1,4 @@
-#include "precomp.h"
+#include "precompiled.h"
 #include <iostream>
 #include "bytecodereader.h"
 #include "llvmmodulegenerator.h"
@@ -47,6 +47,10 @@ int main(int argc, char *argv[]) {
 			cout << "Generating LLVM-assembly...\n";
 			LLVMModuleGenerator generator;
 			Module *mod = generator.generate(reader.byteCode());
+			if (mod == 0) {
+				cerr << "Failed to create module\n";
+				return 0;
+			}
 
 			cout << "Linking runtime...\n";
 			LLVMLinker linker(mod);

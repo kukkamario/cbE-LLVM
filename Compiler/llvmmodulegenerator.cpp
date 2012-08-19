@@ -2,6 +2,7 @@
 #include "stackvalue.h"
 #include "runtimefunction.h"
 #include "cbfunction.h"
+#include "exception.h"
 static LLVMModuleGenerator *mInstance;
 LLVMModuleGenerator::LLVMModuleGenerator()
 {
@@ -26,6 +27,8 @@ Module *LLVMModuleGenerator::generate(ByteCode &bc) {
 
 	//Target triple
 	mod->setTargetTriple("i686-pc-win32");
+
+	bc.stringPool().addStringConstants(mod);
 
 	//Common types
 	IntegerType *intType = IntegerType::get(mod->getContext(), 32);
@@ -62,7 +65,13 @@ Module *LLVMModuleGenerator::generate(ByteCode &bc) {
 	Function *mainFunc = Function::Create(mainFuncType, GlobalValue::ExternalLinkage, "main", mod);
 
 	CBFunction cbMain(bc.begin(), bc.end(), mainFunc, mod, true);
-	cbMain.parse();
+	try {
+		cbMain.parse();
+	}
+	catch (Exception &exp) {
+		cerr << exp << "\n";
+		return 0;
+	}
 
 	/*FunctionPassManager passManager(mod);
 	passManager.add(createBasicAliasAnalysisPass());

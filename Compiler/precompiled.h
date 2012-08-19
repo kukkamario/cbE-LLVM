@@ -43,6 +43,8 @@
 #include "llvm/LinkAllPasses.h"
 #include <llvm/Linker.h>
 #include <llvm/Bitcode/ReaderWriter.h>
+
+#include <boost/lexical_cast.hpp>
 using namespace std;
 using namespace llvm;
 #endif // PRECOMP_H

@@ -1,6 +1,6 @@
 #ifndef FUNCTION_H
 #define FUNCTION_H
-#include "precomp.h"
+#include "precompiled.h"
 class RuntimeFunction {
 	public:
 		RuntimeFunction(const string &name, Type *ret, ArrayRef<Type *> args);

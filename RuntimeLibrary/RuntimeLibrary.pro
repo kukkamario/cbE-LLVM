@@ -10,9 +10,18 @@ TARGET = RuntimeLibrary
 TEMPLATE = lib
 CONFIG += staticlib
 SOURCES += \
-    test.cpp
+    isstring.cpp \
+    system.cpp \
+    string.cpp
 
-HEADERS +=
+HEADERS += \
+    isstring.h \
+    common.h \
+    funcdef.h \
+    string.h
+
+#INCLUDEPATH += "$$(BOOST_INCLUDE)"
+DEFINES += RUNTIME
 
 TARGET_EXT = .bc
 QMAKE_EXT_OBJ = .bc

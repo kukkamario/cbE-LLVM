@@ -5,7 +5,7 @@ CONFIG += console
 CONFIG += precompiled_header
 
 win32 {
-	INCLUDEPATH += "$$(LLVM_INCLUDE)"
+	INCLUDEPATH += "$$(LLVM_INCLUDE)" "$$(BOOST_INCLUDE)"
 	CONFIG(release, debug|release){
 		LIBS += -L"$$(LLVM_LIB)/Release"
 	} else {
@@ -18,14 +18,19 @@ HEADERS += \
     bytecodereader.h \
     bytecode.h \
     instruction.h \
-    precomp.h \
     stringpool.h \
     llvmmodulegenerator.h \
     llvmlinker.h \
     stackvalue.h \
     runtimefunction.h \
     variable.h \
-    cbfunction.h
+    cbfunction.h \
+    mathoperations.h \
+    casts.h \
+    exception.h \
+    precompiled.h \
+    rtstring.h \
+    operations.h
 
 SOURCES += main.cpp \
 	bytecodereader.cpp \
@@ -35,6 +40,11 @@ SOURCES += main.cpp \
     llvmmodulegenerator.cpp \
     llvmlinker.cpp \
     runtimefunction.cpp \
-    cbfunction.cpp
+    cbfunction.cpp \
+    mathoperations.cpp \
+    casts.cpp \
+    exception.cpp \
+    rtstring.cpp \
+    operations.cpp
 
-PRECOMPILED_HEADER = precomp.h
+PRECOMPILED_HEADER = precompiled.h

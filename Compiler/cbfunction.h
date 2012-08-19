@@ -1,6 +1,6 @@
 #ifndef CBFUNCTION_H
 #define CBFUNCTION_H
-#include "precomp.h"
+#include "precompiled.h"
 #include "variable.h"
 #include "instruction.h"
 #include "bytecode.h"

@@ -107,6 +107,11 @@ bool CBFunction::parse() {
 				varStack.push(stackValue);
 				break;
 			}
+			case OCPushSomething:
+				switch( inst.mData) {
+
+				}
+
 			case OCSetInt: {
 				stackValue = varStack.top(); varStack.pop();
 				builder->CreateStore(stackValue.mValue, mIntVars[inst.mData - 1].mAllocaInst,false);
