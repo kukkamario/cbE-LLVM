@@ -18,7 +18,8 @@ HEADERS += \
     isstring.h \
     common.h \
     funcdef.h \
-    string.h
+    string.h \
+    system.h
 
 #INCLUDEPATH += "$$(BOOST_INCLUDE)"
 DEFINES += RUNTIME
@@ -29,6 +30,6 @@ QMAKE_CXXFLAGS -= -mthreads
 QMAKE_CXXFLAGS += -emit-llvm
 QMAKE_CXX = clang++
 QMAKE_CC = clang
-QMAKE_LIB = llvm-ld -link-as-library -o
+QMAKE_LIB = llvm-link -o
 QMAKE_RUN_CXX = $(CXX) $(CXXFLAGS) $(INCPATH) -c $src -o $obj
 QMAKE_RUN_CC = $(CC) $(CCFLAGS) $(INCPATH) -c $src -o $obj

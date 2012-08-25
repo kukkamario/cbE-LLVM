@@ -8,7 +8,7 @@ class ByteCodeReader
 	public:
 		ByteCodeReader();
 		bool readCBExecutable(const string &s);
-		ByteCode byteCode() const { return mByteCode; }
+		ByteCode &byteCode() { return mByteCode; }
 	private:
 		ByteCode mByteCode;
 };

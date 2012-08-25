@@ -1,4 +1,6 @@
 #include "isstring.h"
+#include <stdio.h>
+#include <string>
 //#include "util.h"
 
 const string ISString::nullStdString;
@@ -229,4 +231,9 @@ void ISString::requireEncoding(bool t) {
 bool ISString::isEncodingRequired() const {
 	if (this->data && !this->data->noNeedForEncoding) return true;
 	return false;
+}
+
+void ISString::construct(ISString *s)
+{
+	s->data = 0;
 }

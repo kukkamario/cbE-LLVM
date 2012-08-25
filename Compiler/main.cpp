@@ -5,7 +5,16 @@
 #include "llvmlinker.h"
 #include <llvm/Support/MemoryBuffer.h>
 #include <llvm/Support/system_error.h>
-
+#include <llvm/Assembly/Parser.h>
+#include <llvm/Support/IRReader.h>
+#include <llvm/Object/COFF.h>
+#include <llvm/Object/ObjectFile.h>
+/*
+#include <llvm/MC/MCELFObjectWriter.h>
+#include <llvm/MC/MCWinCOFFObjectWriter.h>
+#include <llvm/MC/MCAsmInfoCOFF.h>
+#include <llvm/MC/MCAssembler.h>
+#include <llvm/MC/MCObjectWriter.h>*/
 
 using namespace std;
 
@@ -46,13 +55,19 @@ int main(int argc, char *argv[]) {
 
 			cout << "Generating LLVM-assembly...\n";
 			LLVMModuleGenerator generator;
-			Module *mod = generator.generate(reader.byteCode());
+			SMDiagnostic diagnostic;
+			Module *mod = ParseIRFile(argv[2], diagnostic, getGlobalContext());
+			if (mod == 0) {
+				cout << "Cant load runtime bitcode: \n" << diagnostic.getMessage() << "\n";
+			}
+
+			mod = generator.generate(reader.byteCode(), mod);
 			if (mod == 0) {
 				cerr << "Failed to create module\n";
 				return 0;
 			}
 
-			cout << "Linking runtime...\n";
+			/*cout << "Linking runtime...\n";
 			LLVMLinker linker(mod);
 			vector< sys::Path > bitcodefiles;
 			bitcodefiles.push_back(sys::Path(argv[2]));
@@ -60,11 +75,11 @@ int main(int argc, char *argv[]) {
 				cerr << "Failed to link runtime\n";
 				return 0;
 			}
-			mod = linker.releaseModule();
+			mod = linker.releaseModule();*/
 
 			cout << "Optimizing and verifying module...\n";
 			string errorInfo;
-			raw_fd_ostream assemblyFile("llvmassembly.s", errorInfo);
+			raw_fd_ostream assemblyFile("llvmassembly.ll", errorInfo);
 			PassManager passManager;
 			passManager.add(createPrintModulePass(&assemblyFile));
 			//passManager.add(createLowerSwitchPass());
@@ -76,20 +91,23 @@ int main(int argc, char *argv[]) {
 			passManager.run(*mod);
 			assemblyFile.close();
 
-			printf("Writing bitcode file...\n");
-			raw_fd_ostream bitcodeFile("temp.bc", errorInfo, raw_fd_ostream::F_Binary);
+
+			cout << "Writing bitcode file...\n";
+			raw_fd_ostream bitcodeFile("raw_bitcode.bc", errorInfo, raw_fd_ostream::F_Binary);
 			if (errorInfo.empty()) {
 				WriteBitcodeToFile(mod, bitcodeFile);
 				bitcodeFile.close();
 			}
 			else {
-				cerr << "Cant open file temp.bc\n";
+				cerr << "Cant open file raw_bitcode.bc\n";
 			}
-			printf("Creating native assembly...\n");
-			system("llc.exe temp.bc");
-			printf("Building binary...\n");
-			system("mingw32-gcc -o temp temp.s");
-			printf("Success\n");
+			cout << "Optimizing bitcode...\n";
+			system("opt -O3 -o optimized_bitcode.bc raw_bitcode.bc");
+			cout << "Creating native assembly...\n";
+			system("llc optimized_bitcode.bc -o native_asm.s"); //-filetype obj -o temp.o
+			cout << "Building binary...\n";
+			system("mingw32-g++ -o cbrun native_asm.s");
+			cout << "Success\n";
 		}
 		else {
 			cerr << "Cant open " << argv[1] << "\n";

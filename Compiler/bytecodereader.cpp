@@ -21,29 +21,48 @@ bool ByteCodeReader::readCBExecutable(const string &s) {
 		return false;
 	}
 
+	// Find out size of the file by seeking to it's end
 	input.seekg(-4, ios::end);
 	endPos = input.tellg();
+
+	// Read the offset for CB-bytecode and go there
 	input.read((char *)(&startPos), 4);
 	input.seekg(24 - startPos, ios::end);
+
+	// Number of strings
 	input.read((char *)(&nStrings), 4);
 
 	// Read and decrypt strings
 	mByteCode.stringPool().reserve(nStrings);
-	string key = "Mark Sibly is my idol!";
+	const char key[] = "Mark Sibly is my idol!";
 	for (uint32_t i = 1; i <= nStrings; i++) {
 		uint32_t len;
 		input.read((char *)(&len), 4);
 		string s;
-		char c;
+		unsigned char c;
 		for (uint32_t j = 0; j < len; j++) {
 			input >> c;
-			s += char(c - key[j % key.length()]);
+			c = c - key[j % 22];
+			if (c > 178 || c == 0) {
+				if (c > 161) {
+					c--;
+				}
+				if (c == 0) {
+					c = 255;
+				}
+			}
+			s += c;
 		}
 		mByteCode.stringPool().append(s);
 	}
 
-	// Skip useless data and directly to beginning of the bytecode
-	input.seekg(32, ios::cur);
+	// Skip useless data and go to beginning of the bytecode
+	input.seekg(31, ios::cur);
+	char pushIntCheck;
+	input.read(&pushIntCheck, 1);
+	if (pushIntCheck == 73) {//PushInt
+		input.seekg(-1, ios_base::cur);
+	}
 	startPos = input.tellg();
 
 	// Read code to memory and close the file

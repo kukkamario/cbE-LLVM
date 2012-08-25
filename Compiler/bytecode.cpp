@@ -12,11 +12,12 @@ void ByteCode::clear() {
 	mStringPool.clear();
 }
 
-void ByteCode::print() {
+void ByteCode::print() const{
 	cout << "Constant strings:\n";
 	int id = 1;
 	for (StringPool::const_iterator i = mStringPool.begin(); i != mStringPool.end(); i++) {
-		cout << "[" + id << "] " << i->mString << "\n";
+		cout << "[" << id << "] " << i->mString << "\n";
+		id++;
 	}
 	cout << "\n";
 	cout << "CB bytecode:\n";

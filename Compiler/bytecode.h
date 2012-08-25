@@ -16,9 +16,10 @@ class ByteCode {
 		const_iterator end() const { return mInstructions.end(); }
 		iterator end() { return mInstructions.end(); }
 		void append(const CBInstruction &ins) { mInstructions.push_back(ins); }
-		StringPool &stringPool() {return mStringPool;}
+		StringPool &stringPool() { return mStringPool; }
+		const StringPool &stringPool() const {return mStringPool;}
 		void clear();
-		void print();
+		void print() const;
 	private:
 		list<CBInstruction> mInstructions;
 		StringPool mStringPool;

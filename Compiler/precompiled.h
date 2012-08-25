@@ -32,8 +32,6 @@
 #include <llvm/ExecutionEngine/ExecutionEngine.h>
 #include <llvm/ExecutionEngine/GenericValue.h>
 #include <llvm/Support/Path.h>
-#include <llvm/ExecutionEngine/JIT.h>
-#include <llvm/ExecutionEngine/JITMemoryManager.h>
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/Support/TargetSelect.h>
 #include <llvm/Target/Mangler.h>

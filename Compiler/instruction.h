@@ -27,7 +27,10 @@ struct CBInstruction {
 		}
 		CBInstruction(OpCode op, int32_t d) : mOpCode(op), mData(d) {}
 		OpCode mOpCode;
+		union {
 		int32_t mData;
+		float mFData;
+		};
 		int32_t mIndex;
 		llvm::BasicBlock *mBasicBlock;
 };

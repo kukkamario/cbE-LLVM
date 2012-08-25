@@ -5,7 +5,7 @@
 /**
   * Implicit-shared string
   */
-class ISString {
+struct ISString {
 	public:
 		friend ISString operator +(const string &,const ISString&);
 
@@ -90,11 +90,10 @@ class ISString {
 		void requireEncoding(bool t);
 
 		bool isEncodingRequired() const;
-
+		static void construct(ISString *s);
 	private:
 		/** Implicit-shared data*/
-		class SharedData {
-			public:
+		struct SharedData {
 				SharedData():str(),  utfStr(0), noNeedForEncoding(false), refCounter(1) {}
 				SharedData(const string &s):str(s), utfStr(0), noNeedForEncoding(false), refCounter(1) {}
 				~SharedData();

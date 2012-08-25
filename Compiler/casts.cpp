@@ -12,12 +12,27 @@ void init() {
 Value *toString(IRBuilder<> *b, const StackValue &val) {
 	if (val.mConstant) {
 		switch (val.mType) {
-			case StackValue::String:
-				return b->CreateCall(String::mStringFromCharArray, val.mValue);
-			case StackValue::Int:
-				return b->CreateCall(String::mStringFromInt, val.mValue);
-			case StackValue::Float:
-				return b->CreateCall(String::mStringFromFloat, val.mValue);
+			case StackValue::String: {
+				if (val.mString == 0) {
+					AllocaInst *str = b->CreateAlloca(String::mStructType);
+					b->CreateCall(String::mStringNull, str);
+					return str;
+				}
+				AllocaInst *str = b->CreateAlloca(String::mStructType);
+				Value *charArrayPtr = b->CreateBitCast(val.mValue, b->getInt8Ty()->getPointerTo());
+				b->CreateCall2(String::mCreateStringFromCharArray, str, charArrayPtr);
+				return str;
+			}
+			case StackValue::Int: {
+				AllocaInst *str = b->CreateAlloca(String::mStructType);
+				b->CreateCall2(String::mStringFromInt, str, val.mValue);
+				return str;
+			}
+			case StackValue::Float: {
+				AllocaInst *str = b->CreateAlloca(String::mStructType);
+				b->CreateCall2(String::mStringFromFloat, str, val.mValue);
+				return str;
+			}
 			default:
 				cerr << "Wtf error 1: Cast::toString\n";
 				return 0;
@@ -26,10 +41,21 @@ Value *toString(IRBuilder<> *b, const StackValue &val) {
 	switch (val.mType) {
 		case StackValue::String:
 			return val.mValue;
-		case StackValue::Float:
-			return b->CreateCall(String::mStringFromFloat, val.mValue);
-		case StackValue::Int:
-			return b->CreateCall(String::mStringFromInt, val.mValue);
+		case StackValue::Bool: {
+			AllocaInst *str = b->CreateAlloca(String::mStructType);
+			b->CreateCall2(String::mStringFromInt, str, toBool(b, val));
+			return str;
+		}
+		case StackValue::Int: {
+			AllocaInst *str = b->CreateAlloca(String::mStructType);
+			b->CreateCall2(String::mStringFromInt, str, val.mValue);
+			return str;
+		}
+		case StackValue::Float: {
+			AllocaInst *str = b->CreateAlloca(String::mStructType);
+			b->CreateCall2(String::mStringFromFloat, str, val.mValue);
+			return str;
+		}
 		default:
 			cerr << "Wtf error 2: Cast::toString\n";
 			return 0;
@@ -44,10 +70,11 @@ Value *toInt(IRBuilder<> *b, const StackValue &val) {
 			case StackValue::Float:
 				return b->getInt32((int)(val.mFloat + 0.5f));
 			case StackValue::String:
+				if (val.mString == 0) return b->getInt32(0);
 				try {
 					return b->getInt32(boost::lexical_cast<int32_t>(*val.mString));
 				}
-				catch (boost::bad_lexical_cast &e) {
+				catch (boost::bad_lexical_cast &) {
 					throw Exception(Exception::Cast, "\"" + *val.mString + "\" cannot be converted to integer");
 				};
 				return 0;
@@ -57,10 +84,12 @@ Value *toInt(IRBuilder<> *b, const StackValue &val) {
 		}
 	}
 	switch (val.mType) {
+		case StackValue::Bool:
+			return b->CreateIntCast(val.mValue, b->getInt1Ty(), false);
 		case StackValue::Int:
 			return val.mValue;
 		case StackValue::Float:
-			return b->CreateFPCast(val.mValue, Type::getInt32Ty(b->getContext()));
+			return b->CreateFPToSI(val.mValue, Type::getInt32Ty(b->getContext()));
 		case StackValue::String:
 			return b->CreateCall(String::mStringToInt, val.mValue);
 		default:
@@ -74,14 +103,15 @@ Value *toFloat(IRBuilder<> *b, const StackValue &val) {
 	if (val.mConstant) {
 		switch(val.mType) {
 			case StackValue::Int:
-				return b->getInt32(val.mInt);
+				return ConstantFP::get(b->getFloatTy(), (float)val.mInt);
 			case StackValue::Float:
-				return b->getInt32((int)(val.mFloat + 0.5f));
+				return ConstantFP::get(b->getFloatTy(), val.mFloat);
 			case StackValue::String:
+				if (val.mString == 0) return ConstantFP::get(b->getFloatTy(), 0);
 				try {
 					return ConstantFP::get(b->getContext(), APFloat(boost::lexical_cast<float>(*val.mString)));
 				}
-				catch (boost::bad_lexical_cast &e) {
+				catch (boost::bad_lexical_cast &) {
 					throw Exception(Exception::Cast, "\"" + *val.mString + "\" cannot be converted to float");
 				};
 				return 0;
@@ -91,8 +121,10 @@ Value *toFloat(IRBuilder<> *b, const StackValue &val) {
 		}
 	}
 	switch (val.mType) {
+		case StackValue::Bool:
+			return b->CreateIntCast(val.mValue, b->getFloatTy(), false);
 		case StackValue::Int:
-			return b->CreateIntCast(val.mValue, b->getFloatTy(), true);
+			return b->CreateSIToFP(val.mValue, b->getFloatTy());
 		case StackValue::Float:
 			return val.mValue;
 		case StackValue::String:
@@ -109,6 +141,36 @@ Value *toShort(IRBuilder<> *b, const StackValue &val) {
 
 Value *toByte(IRBuilder<> *b, const StackValue &val) {
 	return 0;
+}
+
+Value *toBool(IRBuilder<> *b, const StackValue &val) {
+	if (val.mConstant) {
+		switch (val.mType) {
+			case StackValue::String:
+				if (val.mString == 0) return b->getInt1(false);
+				return b->getInt1(!val.mString->empty());
+			case StackValue::Int:
+				return b->getInt1(val.mInt != 0);
+			case StackValue::Float:
+				return b->getInt1(val.mFloat != 0.0f);
+			default:
+				cerr << "Wtf error 1: Cast::toBool\n";
+				return 0;
+		}
+	}
+	switch (val.mType) {
+		case StackValue::String:
+			return b->CreateCall(String::mStringToBool, val.mValue);
+		case StackValue::Float: //TODO: Check...
+			return b->CreateFCmpUNE(val.mValue, ConstantFP::get(b->getFloatTy(), 0.0));
+		case StackValue::Bool:
+			return val.mValue;
+		case StackValue::Int:
+			return b->CreateICmpNE(val.mValue,ConstantInt::get(b->getInt32Ty(), 0));
+		default:
+			cerr << "Wtf error 2: Cast::toBool\n";
+			return 0;
+	}
 }
 
 } //namespace Cast

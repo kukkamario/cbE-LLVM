@@ -1,14 +1,22 @@
 #include "cbfunction.h"
 #include "stackvalue.h"
 #include "llvmmodulegenerator.h"
+#include "casts.h"
+#include "operations.h"
+#include "exception.h"
+#include "bytecode.h"
+#include "rtstring.h"
+#include "rtsystem.h"
+#include "callcreator.h"
 
 
-CBFunction::CBFunction(ByteCode::iterator begin, ByteCode::iterator end, Function *func, Module *mod, bool isMain) :
+CBFunction::CBFunction(const ByteCode *bc, ByteCode::iterator begin, ByteCode::iterator end, Function *func, Module *mod, bool isMain) :
 	mBCBegin(begin),
 	mBCEnd(end),
 	mFunction(func),
 	mIsMain(isMain),
-	mModule(mod)
+	mModule(mod),
+	mByteCode(bc)
 {
 }
 
@@ -22,6 +30,7 @@ bool CBFunction::parse() {
 	Type *voidType = Type::getVoidTy(context);
 
 	ConstantInt *constIntZero = ConstantInt::get(IntegerType::get(context, 32), 0);
+	Constant *constFloatZero = ConstantFP::get(Type::getFloatTy(context), 0.0);
 	//First pass
 	set<int32_t> blockBorders;
 	int32_t index = 0;
@@ -65,7 +74,7 @@ bool CBFunction::parse() {
 		vector<Value*> args;
 		args.push_back(mainArgc);
 		args.push_back(mainArgv);
-		CallInst *cbMainCall = CallInst::Create(modGen->cbRuntimeMain, args, "", currentBlock);
+		CallInst::Create(modGen->cbRuntimeMain, args, "", currentBlock);
 	}
 	basicBlocks[1] = currentBlock;
 
@@ -87,6 +96,7 @@ bool CBFunction::parse() {
 	stack<StackValue> varStack;
 	StackValue stackValue;
 	for (ByteCode::iterator i = mBCBegin; i != mBCEnd; i++) {
+		Exception::mGlobalIndex = index;
 		CBInstruction &inst = *i;
 		if (inst.mBasicBlock != currentBlock) {
 			if (builder) {
@@ -107,14 +117,37 @@ bool CBFunction::parse() {
 				varStack.push(stackValue);
 				break;
 			}
-			case OCPushSomething:
-				switch( inst.mData) {
-
+			case OCPushSomething: {
+				int32_t type = varStack.top().mInt; varStack.pop();
+				switch( type) {
+					case 2: //Float
+						stackValue.mFloat = inst.mFData;
+						stackValue.mType = StackValue::String;
+						stackValue.mValue = ConstantFP::get(builder->getFloatTy(), inst.mFData);
+						break;
+					case 5: {//String
+						if (inst.mData == 0) {
+							stackValue.mString = 0;
+							stackValue.mValue = 0;
+						}
+						else {
+							const StringPool::ConstString &str = mByteCode->stringPool().get(inst.mData - 1);
+							stackValue.mValue = str.mGlobalVariable;
+							stackValue.mString = &str.mString;
+						}
+						stackValue.mType = StackValue::String;
+						break;
+					}
+					default:
+						throw Exception(Exception::Unimplemented, "Unimplemented PushSomething");
 				}
-
+				stackValue.mConstant = true;
+				varStack.push(stackValue);
+				break;
+			}
 			case OCSetInt: {
 				stackValue = varStack.top(); varStack.pop();
-				builder->CreateStore(stackValue.mValue, mIntVars[inst.mData - 1].mAllocaInst,false);
+				builder->CreateStore(Cast::toInt(builder, stackValue), mIntVars[inst.mData - 1].mAllocaInst,false);
 				break;
 			}
 			case  OCPushVariable: {
@@ -123,9 +156,23 @@ bool CBFunction::parse() {
 					case 1: //Int
 						stackValue.mValue = builder->CreateLoad(mIntVars[inst.mData - 1].mAllocaInst, false);
 						stackValue.mType = StackValue::Int;
+						break;
+					case 2: //Float
+						stackValue.mValue = builder->CreateLoad(mFloatVars[inst.mData - 1].mAllocaInst, false);
+						stackValue.mType = StackValue::Float;
+						break;
+					case 5: //String
+						stackValue.mValue = mStringVars[inst.mData -1].mAllocaInst;
+						stackValue.mType = StackValue::String;
+						break;
 				}
 				stackValue.mConstant = false;
 				varStack.push(stackValue);
+				break;
+			}
+			case OCSetFloat: {
+				stackValue = varStack.top(); varStack.pop();
+				builder->CreateStore(Cast::toFloat(builder, stackValue), mFloatVars[inst.mData - 1].mAllocaInst, false);
 				break;
 			}
 			case OCIncVar: {
@@ -136,38 +183,156 @@ bool CBFunction::parse() {
 			}
 			case OCOperation: {
 				switch(inst.mData) {
+					case 1: { //unary minus
+						StackValue val = varStack.top(); varStack.pop();
+						stackValue = Operation::unaryMinus(builder, val);
+						varStack.push(stackValue);
+						break;
+					}
+					case 2: { //unary plus
+						StackValue val = varStack.top(); varStack.pop();
+						//stackValue = Operation::unaryPlus(builder, val);
+						varStack.push(stackValue);
+						break;
+					}
+					case 3: {
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::power(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
 					case 4: {//Addition
 						StackValue right = varStack.top(); varStack.pop();
 						StackValue left = varStack.top(); varStack.pop();
-						stackValue.mValue = builder->CreateAdd(left.mValue, right.mValue);
-						stackValue.mType = StackValue::Int;
-						stackValue.mConstant = false;
+						stackValue = Operation::add(builder, left, right);
 						varStack.push(stackValue);
 						break;
 					}
 					case 5:{//Subtraction
 						StackValue right = varStack.top(); varStack.pop();
 						StackValue left = varStack.top(); varStack.pop();
-						stackValue.mValue = builder->CreateSub(left.mValue, right.mValue);
-						stackValue.mType = StackValue::Int;
-						stackValue.mConstant = false;
+						stackValue = Operation::subtract(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 6: { //multiplication
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::multiply(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 7: { //division
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::divide(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 8: { //modulo
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::modulo(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 9: { //shl
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::shl(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 10: { //shr
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::shr(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 11: { //sar
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::sar(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 12: {//less than
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::less(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 13: {//greater than
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::greater(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 14: { //equal
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::equal(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 15: { //equal
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::equal(builder, left, right);
 						varStack.push(stackValue);
 						break;
 					}
 					case 16: {//lessThanOrEqual
 						StackValue right = varStack.top(); varStack.pop();
 						StackValue left = varStack.top(); varStack.pop();
-						stackValue.mValue = builder->CreateICmpSLE(left.mValue, right.mValue);
-						stackValue.mType = StackValue::Int;
-						stackValue.mConstant = false;
+						stackValue = Operation::lessOrEqual(builder, left, right);
 						varStack.push(stackValue);
+						break;
+					}
+					case 17: {//lessThanOrEqual
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						stackValue = Operation::greaterOrEqual(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 18: { //and
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::and(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 19: { //or
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::or(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 20: { //xor
+						StackValue right = varStack.top(); varStack.pop();
+						StackValue left = varStack.top(); varStack.pop();
+						//stackValue = Operation::xor(builder, left, right);
+						varStack.push(stackValue);
+						break;
+					}
+					case 21: { //not
+						StackValue val = varStack.top(); varStack.pop();
+						//stackValue = Operation::not(builder, val);
+						varStack.push(stackValue);
+						break;
 					}
 				}
 				break;
 			}
 			case OCJump: {
 				stackValue = varStack.top(); varStack.pop();
-				builder->CreateCondBr(stackValue.mValue, basicBlocks[index + 1], basicBlocks[inst.mData]);
+				builder->CreateCondBr(Cast::toBool(builder, stackValue), basicBlocks[index + 1], basicBlocks[inst.mData]);
 				skipBr = index + 1;
 			}
 			case OCCommand: {
@@ -180,10 +345,22 @@ bool CBFunction::parse() {
 						skipBr = index + 1;
 						break;
 					case 69:
-						builder->CreateCall(modGen->commandEnd->function());
+						createCall(builder, 0, System::mCommandEnd);
 						skipToBlockChange = true;
 						builder->CreateUnreachable();
 						break;
+					case 77: {//SetVariable
+						int32_t type = varStack.top().mInt; varStack.pop();
+						int32_t place = varStack.top().mInt; varStack.pop();
+						StackValue val = varStack.top(); varStack.pop();
+						switch (type) {
+							case 1: //String
+								builder->CreateCall2(String::mStringSet,
+													 mStringVars[place - 1].mAllocaInst,
+													 Cast::toString(builder, val));
+								break;
+						}
+					}
 					case 97: //Array numbers
 						varStack.pop(); //Short
 						varStack.pop(); //Byte
@@ -212,11 +389,26 @@ bool CBFunction::parse() {
 									builder->CreateStore(constIntZero, mIntVars[i].mAllocaInst, false);
 								}
 							}
+							Type *floatTy = builder->getFloatTy();
+							if (floats > 0) {
+								mFloatVars = new Variable[floats];
+								for (int32_t i = 0; i < floats; i++) {
+									mFloatVars[i].mAllocaInst = builder->CreateAlloca(floatTy);
+									builder->CreateStore(constFloatZero, mFloatVars[i].mAllocaInst, false);
+								}
+							}
+							if (strings > 0) {
+								mStringVars = new Variable[strings];
+								for (int32_t i = 0; i < strings; i++) {
+									mStringVars[i].mAllocaInst = builder->CreateAlloca(String::mStructType);
+									builder->CreateCall(String::mStringConstructEmpty, mStringVars[i].mAllocaInst);
+								}
+							}
 							break;
 						}
 					case 207: {//Print
 						stackValue = varStack.top(); varStack.pop();
-						builder->CreateCall(modGen->commandPrintI->function(), stackValue.mValue);
+						createCall(builder, 1, stackValue, System::mCommandPrintI, System::mCommandPrintF, System::mCommandPrintS);
 						break;
 					}
 				}
@@ -225,8 +417,7 @@ bool CBFunction::parse() {
 			case OCFunction: {
 				switch (inst.mData) {
 					case 422: //Timer
-						stackValue.mValue = builder->CreateCall(modGen->functionTimer->function());
-						stackValue.mType = StackValue::Int;
+						stackValue = createCall(builder, 0, System::mFunctionTimer);
 						varStack.push(stackValue);
 						break;
 				}

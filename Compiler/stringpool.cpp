@@ -15,12 +15,17 @@ void StringPool::append(const string &str)
 
 void StringPool::addStringConstants(Module *module)
 {
+
+	int32_t index = 1;
 	for (vector<ConstString>::iterator i = mPool.begin(); i != mPool.end(); i++) {
 		ConstString &str = *i;
-		str.mConstArray = ConstantArray::get(module->getContext(), str.mString);
-		str.mGlobalVariable = new GlobalVariable(ArrayType::get(IntegerType::get(module->getContext(), 8), str.mString.size() + 1),
+
+
+		str.mConstArray = ConstantDataArray::getString(module->getContext(), str.mString);
+		str.mGlobalVariable = new GlobalVariable(*module, ArrayType::get(IntegerType::get(module->getContext(), 8), str.mString.size() + 1),
 												 true,
 												 GlobalVariable::PrivateLinkage,
-												 str.mConstArray);
+												 str.mConstArray, "userString_"+boost::lexical_cast<string>(index));
+		index++;
 	}
 }

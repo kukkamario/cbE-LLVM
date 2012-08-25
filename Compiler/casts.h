@@ -10,5 +10,6 @@ Value *toInt(IRBuilder<> *b, const StackValue &val);
 Value *toFloat(IRBuilder<> *b, const StackValue &val);
 Value *toShort(IRBuilder<> *b, const StackValue &val);
 Value *toByte(IRBuilder<> *b, const StackValue &val);
+Value *toBool(IRBuilder<> *b, const StackValue &val);
 }
 #endif // CASTS_H
