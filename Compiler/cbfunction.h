@@ -14,6 +14,8 @@ class CBFunction
 		Variable *mIntVars;
 		Variable *mFloatVars;
 		Variable *mStringVars;
+		Variable *mShortVars;
+		Variable *mByteVars;
 		const ByteCode *mByteCode;
 		Module *mModule;
 		map<int32_t, BasicBlock*> mBasicBlock;

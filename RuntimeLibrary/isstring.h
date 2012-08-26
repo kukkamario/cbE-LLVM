@@ -21,6 +21,8 @@ struct ISString {
 		/** Copy constructor */
 		ISString(const ISString &str);
 
+		ISString(const char c);
+
 		/** Destructor */
 		~ISString();
 
@@ -95,6 +97,7 @@ struct ISString {
 		/** Implicit-shared data*/
 		struct SharedData {
 				SharedData():str(),  utfStr(0), noNeedForEncoding(false), refCounter(1) {}
+				SharedData(const char * const s):str(s), utfStr(0), noNeedForEncoding(false), refCounter(1) {}
 				SharedData(const string &s):str(s), utfStr(0), noNeedForEncoding(false), refCounter(1) {}
 				~SharedData();
 

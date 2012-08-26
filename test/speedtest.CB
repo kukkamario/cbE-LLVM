@@ -1,10 +1,11 @@
-t = Timer()
-num = 2
-For i = 1 To 10000
-    num = 23
-    For i2 = 2 To 10000
-        num = num + i2 + 53 + i
-    Next i2
+check = Timer()
+count# = 2
+For i = 0 To 1000000
+      x# = Rand(-10000, 10000)
+      y# = Rand(-10000, 10000)
+      count# = count# + (x# * y# * 5.0 * i) + (x# / y# / 2.0) + (x# - y# - 5.0 + i) + (x# > y#)
+      count# = count# + x# + y# - z#
 Next i
-Print (Timer() - t)
-Print num
+Print "Time: "+(Timer() - check)
+Print "Count: " + count
+WaitKey

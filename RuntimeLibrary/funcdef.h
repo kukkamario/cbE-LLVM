@@ -67,23 +67,18 @@
 			#undef R_STRING
 			#undef R_BOOL
 		#endif
-		#define P_INT(_name_) //rt_func_params.push_back(IntegerType::get(module->getContext(), 32));
-		#define P_FLOAT(_name_) //rt_func_params.push_back(Type::getFloatTy(module->getContext()));
-		#define P_STRING(_name_) //rt_func_params.push_back(String::mStructType);
-		#define P_STRING_POINTER(_name_) //rt_func_params.push_back(String::mStructType->getPointerTo(0));
-		#define P_CHAR_ARRAY(_name_) //rt_func_params.push_back(PointerType::get(IntegerType::get(module->getContext(), 8), 0));
+		#define P_INT(_name_)
+		#define P_FLOAT(_name_)
+		#define P_STRING(_name_)
+		#define P_STRING_POINTER(_name_)
+		#define P_CHAR_ARRAY(_name_)
 		#define P_VOID
-		#define R_VOID //Type::getVoidTy(module->getContext())
-		#define R_INT //IntegerType::get(module->getContext(), 32)
-		#define R_FLOAT //Type::getFloatTy(module->getContext())
-		#define R_STRING //String::mStructType
-		#define R_BOOL //IntegerType::get(module->getContext(), 1)
+		#define R_VOID
+		#define R_INT
+		#define R_FLOAT
+		#define R_STRING
+		#define R_BOOL
 #define RT_FUNC(_name_, _ret_type_, ...) _name_ = module->getFunction(#_name_);assert(_name_);
-		/*#define RT_FUNC(_name_, _ret_type_ , _params_) { \
-			vector<Type*> rt_func_params; \
-			_params_ \
-			FunctionType *_name_##FuncTy = FunctionType::get(_ret_type_, rt_func_params, false); \
-			_name_ = Function::Create(_name_##FuncTy, Function::ExternalLinkage, #_name_, module); }*/
 		#endif //COMPILER_SOURCE_FUNCDEF_H
 	#endif //COMPILER_HEADER
 #endif

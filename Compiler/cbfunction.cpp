@@ -8,7 +8,7 @@
 #include "rtstring.h"
 #include "rtsystem.h"
 #include "callcreator.h"
-
+#include "rtmath.h"
 
 CBFunction::CBFunction(const ByteCode *bc, ByteCode::iterator begin, ByteCode::iterator end, Function *func, Module *mod, bool isMain) :
 	mBCBegin(begin),
@@ -122,7 +122,7 @@ bool CBFunction::parse() {
 				switch( type) {
 					case 2: //Float
 						stackValue.mFloat = inst.mFData;
-						stackValue.mType = StackValue::String;
+						stackValue.mType = StackValue::Float;
 						stackValue.mValue = ConstantFP::get(builder->getFloatTy(), inst.mFData);
 						break;
 					case 5: {//String
@@ -416,6 +416,19 @@ bool CBFunction::parse() {
 			}
 			case OCFunction: {
 				switch (inst.mData) {
+					case 117: {//Rand
+						StackValue max = varStack.top(); varStack.pop();
+						StackValue min = varStack.top(); varStack.pop();
+						stackValue = createCall(builder, 2, min, max, Math::mFunctionRand);
+						varStack.push(stackValue);
+						break;
+					}
+					case 161: {//Chr
+						StackValue c = varStack.top(); varStack.pop();
+						stackValue = createCall(builder, 1, c, String::mFunctionChr);
+						varStack.push(stackValue);
+						break;
+					}
 					case 422: //Timer
 						stackValue = createCall(builder, 0, System::mFunctionTimer);
 						varStack.push(stackValue);

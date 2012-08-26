@@ -31,7 +31,8 @@ HEADERS += \
     operations.h \
     callcreator.h \
     rtsystem.h \
-    debug.h
+    debug.h \
+    rtmath.h
 
 SOURCES += main.cpp \
 	bytecodereader.cpp \
@@ -46,6 +47,7 @@ SOURCES += main.cpp \
     rtstring.cpp \
     operations.cpp \
     callcreator.cpp \
-    rtsystem.cpp
+    rtsystem.cpp \
+    rtmath.cpp
 
 PRECOMPILED_HEADER = precompiled.h

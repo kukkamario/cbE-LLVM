@@ -4,6 +4,7 @@
 #include "exception.h"
 #include "rtstring.h"
 #include "rtsystem.h"
+#include "rtmath.h"
 
 static LLVMModuleGenerator *mInstance;
 LLVMModuleGenerator::LLVMModuleGenerator()
@@ -34,6 +35,7 @@ Module *LLVMModuleGenerator::generate(ByteCode &bc, Module *mod) {
 
 	String::init(mod);
 	System::init(mod);
+	Math::init(mod);
 
 
 	bc.stringPool().addStringConstants(mod);

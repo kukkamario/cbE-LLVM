@@ -64,3 +64,8 @@ RT_FUNC(mStringGreaterOrEqual, R_BOOL, P_STRING(s1), P_STRING(s2)) {
 RT_FUNC(mStringLessOrEqual, R_BOOL, P_STRING(s1), P_STRING(s2)) {
 	return s1 <= s2;
 }
+
+
+RT_FUNC(mFunctionChr, R_STRING, P_INT(c)) {
+	return ISString((char)c);
+}

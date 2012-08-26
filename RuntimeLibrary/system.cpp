@@ -23,4 +23,5 @@ RT_FUNC(mCommandPrintS, R_VOID, P_STRING(s)) {
 }
 
 extern "C" void cbRuntimeMain(int argc, char *argv[]) {
+	srand(clock());
 }

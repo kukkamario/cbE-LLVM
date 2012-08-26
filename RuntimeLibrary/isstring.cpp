@@ -25,6 +25,17 @@ ISString::ISString(const ISString &str): data(str.data) {
 	}
 }
 
+ISString::ISString(const char c)
+{
+	static char buf[2] = {0, 0};
+	if (c != 0) {
+		buf[0] = c;
+		data = new SharedData(buf);
+		return;
+	}
+	data = 0;
+}
+
 /** Destructor */
 ISString::~ISString() {
 	if (data) {

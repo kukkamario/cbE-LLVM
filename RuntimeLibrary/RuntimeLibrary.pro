@@ -12,14 +12,16 @@ CONFIG += staticlib
 SOURCES += \
     isstring.cpp \
     system.cpp \
-    string.cpp
+    string.cpp \
+    math.cpp
 
 HEADERS += \
     isstring.h \
     common.h \
     funcdef.h \
     string.h \
-    system.h
+    system.h \
+    math.h
 
 #INCLUDEPATH += "$$(BOOST_INCLUDE)"
 DEFINES += RUNTIME
